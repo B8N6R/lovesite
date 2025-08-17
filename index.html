@@ -21,6 +21,9 @@
 
     .container { width: 90%; max-width: 500px; position: relative; }
 
+    /* 避免遮挡点击：让图和标题不吃点击事件 */
+    #mainImage, #question { pointer-events: none; }
+
     #mainImage {
       width: 100%;
       max-width: 200px;
@@ -47,6 +50,8 @@
       will-change: transform;
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
       position: relative;
+      z-index: 20;           /* ← 永远压在上面，避免被遮 */
+      pointer-events: auto;  /* ← 明确允许点击 */
     }
 
     #yes {
@@ -59,7 +64,6 @@
     #no {
       background-color: #6784b1;
       color: #fff;
-      z-index: 20;
     }
 
     @keyframes popIn {
@@ -122,12 +126,11 @@
     const questionText = document.getElementById("question");
     const mainImage = document.getElementById("mainImage");
 
-    // ---------------- 参数（第6次触发） ----------------
+    // ---------- 参数：乘法放大，第6次触发 ----------
     let clickCount = 0;
     let yesScale   = 1;
     const step = 1.5;
-    // 想第6次触发：阈值选在 5次(≈7.59) 与 6次(≈11.39)之间，这里用 8
-    const autoTriggerScale = 8;
+    const autoTriggerScale = 8; // 介于 1.5^5≈7.59 和 1.5^6≈11.39 之间 → 第6次触发
     const maxTranslateX = 350;
     const maxMoveUp     = 200;
 
@@ -139,11 +142,10 @@
       "原谅我嘛，对不起"
     ];
 
-    // ---------------- 预加载图片 ----------------
+    // ---------- 预加载 ----------
     ["rencuo.png","geiqian.png","duoqilai.png","weiqu.png","crying.png","hug.png"]
       .forEach(name => { const i = new Image(); i.src = name; });
 
-    // ---------------- 逻辑函数 ----------------
     function updateYesScale(nextScale) {
       yesScale = nextScale;
       yesButton.style.transform = `scale(${yesScale})`;
@@ -163,15 +165,14 @@
       document.body.style.overflow = "hidden";
     }
 
-    // ---------------- 单一监听器（只此一个） ----------------
+    // ---------- 只有这一个监听器 ----------
     noButton.addEventListener("click", function () {
       clickCount += 1;
 
-      // 乘法放大（序列：1.5, 2.25, 3.375, 5.0625, 7.59375, 11.39…）
-      const nextScale = yesScale * step;
+      const nextScale = yesScale * step; // 乘法增长：1.5, 2.25, 3.375, 5.06, 7.59, 11.39…
+      console.log('click', clickCount, 'scale', nextScale);
       updateYesScale(nextScale);
 
-      // 移动“不”按钮、抬升图片与标题
       const noOffset = Math.min(clickCount * 70, maxTranslateX);
       noButton.style.transform = `translateX(${noOffset}px)`;
 
@@ -179,10 +180,10 @@
       mainImage.style.transform = `translateY(-${moveUp}px)`;
       questionText.style.transform = `translateY(-${moveUp}px)`;
 
-      // 文案与图片切换
       if (clickCount <= noTexts.length) {
         noButton.innerText = noTexts[clickCount - 1];
       }
+
       if (clickCount === 1) mainImage.src = "rencuo.png";
       if (clickCount === 2) mainImage.src = "geiqian.png";
       if (clickCount === 3) mainImage.src = "duoqilai.png";
