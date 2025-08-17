@@ -19,9 +19,9 @@
       overflow-x: hidden;
     }
 
-    .container { width: 90%; max-width: 500px; position: relative; }
+    .container { width: 90%; max-width: 500px; position: relative; z-index: 1; }
 
-    /* 避免遮挡点击：让图和标题不吃点击事件 */
+    /* 避免遮挡点击：图和标题不吃点击事件 */
     #mainImage, #question { pointer-events: none; }
 
     #mainImage {
@@ -50,8 +50,12 @@
       will-change: transform;
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
       position: relative;
-      z-index: 20;           /* ← 永远压在上面，避免被遮 */
-      pointer-events: auto;  /* ← 明确允许点击 */
+      z-index: 100;              /* 按钮优先命中 */
+      pointer-events: auto;
+      min-width: 44px;           /* 提升可点性（移动端建议尺寸） */
+      min-height: 44px;
+      touch-action: manipulation;/* 去掉移动端点击延迟/手势干扰 */
+      -webkit-tap-highlight-color: transparent;
     }
 
     #yes {
@@ -64,6 +68,7 @@
     #no {
       background-color: #6784b1;
       color: #fff;
+      left: 0; /* 用 left 位移，避免 transform 在部分机型造成命中偏差 */
     }
 
     @keyframes popIn {
@@ -114,7 +119,7 @@
 <body>
   <div class="container">
     <img id="mainImage" src="./start.png" alt="开始图片"
-         onerror="this.alt='谢谢宝宝的原谅！'+this.src">
+         onerror="this.alt='谢谢宝宝的原谅！';">
     <h1 id="question">你愿意原谅我吗？</h1>
     <button id="yes">和好</button>
     <button id="no">不要</button>
@@ -122,15 +127,16 @@
 
   <script>
     const yesButton = document.getElementById("yes");
-    const noButton = document.getElementById("no");
-    const questionText = document.getElementById("question");
+    const noButton  = document.getElementById("no");
+    const question  = document.getElementById("question");
     const mainImage = document.getElementById("mainImage");
 
     // ---------- 参数：乘法放大，第6次触发 ----------
     let clickCount = 0;
     let yesScale   = 1;
     const step = 1.5;
-    const autoTriggerScale = 8; // 介于 1.5^5≈7.59 和 1.5^6≈11.39 之间 → 第6次触发
+    // 第6次触发：阈值取 8（位于 1.5^5≈7.59 与 1.5^6≈11.39 之间）
+    const autoTriggerScale = 8;
     const maxTranslateX = 350;
     const maxMoveUp     = 200;
 
@@ -154,31 +160,19 @@
       }
     }
 
-    function enterSuccessScreen() {
-      document.body.innerHTML = `
-        <div class="yes-screen">
-          <h1 class="yes-text">!!!喜欢你!! ( >᎑<)♡︎ᐝ</h1>
-          <img src="./hug.png" alt="拥抱" class="yes-image"
-               onerror="this.alt='谢谢宝宝的原谅！'+this.src">
-        </div>
-      `;
-      document.body.style.overflow = "hidden";
-    }
-
-    // ---------- 只有这一个监听器 ----------
-    noButton.addEventListener("click", function () {
+    function handleNoClick() {
       clickCount += 1;
 
       const nextScale = yesScale * step; // 乘法增长：1.5, 2.25, 3.375, 5.06, 7.59, 11.39…
-      console.log('click', clickCount, 'scale', nextScale);
       updateYesScale(nextScale);
 
+      // 用 left 位移，避免 transform 引起命中偏差
       const noOffset = Math.min(clickCount * 70, maxTranslateX);
-      noButton.style.transform = `translateX(${noOffset}px)`;
+      noButton.style.left = `${noOffset}px`;
 
       const moveUp = Math.min(clickCount * 25, maxMoveUp);
       mainImage.style.transform = `translateY(-${moveUp}px)`;
-      questionText.style.transform = `translateY(-${moveUp}px)`;
+      question.style.transform  = `translateY(-${moveUp}px)`;
 
       if (clickCount <= noTexts.length) {
         noButton.innerText = noTexts[clickCount - 1];
@@ -189,9 +183,27 @@
       if (clickCount === 3) mainImage.src = "duoqilai.png";
       if (clickCount === 4) mainImage.src = "weiqu.png";
       if (clickCount >= 5) mainImage.src = "crying.png";
-    });
+    }
 
-    yesButton.addEventListener("click", enterSuccessScreen);
+    function enterSuccessScreen() {
+      if (document.querySelector('.yes-screen')) return; // 防重复
+      document.body.insertAdjacentHTML('beforeend', `
+        <div class="yes-screen">
+          <h1 class="yes-text">!!!喜欢你!! ( >᎑<)♡︎ᐝ</h1>
+          <img src="./hug.png" alt="拥抱" class="yes-image"
+               onerror="this.alt='谢谢宝宝的原谅！';">
+        </div>
+      `);
+      document.body.style.overflow = "hidden";
+    }
+
+    // ---------- 使用 pointer 事件，兼容触摸/鼠标 ----------
+    yesButton.addEventListener('pointerup', enterSuccessScreen);
+    noButton .addEventListener('pointerup', handleNoClick);
+
+    // 调试：如果点不动，打开控制台看是否打印
+    // yesButton.addEventListener('pointerup', () => console.log('yes tap'));
+    // noButton .addEventListener('pointerup',  () => console.log('no  tap'));
   </script>
 </body>
 </html>
