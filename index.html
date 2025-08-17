@@ -46,7 +46,7 @@
       transition: transform 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
       will-change: transform;
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      position: relative; /* 为 z-index 建立层叠上下文 */
+      position: relative;
     }
 
     #yes {
@@ -54,13 +54,12 @@
       color: #fff;
       transform-origin: center center;
       animation: popIn 450ms ease-out 1;
-      /* 不再手动设 z-index，避免挡住“不要” */
     }
 
     #no {
       background-color: #6784b1;
       color: #fff;
-      z-index: 20; /* 关键：保证“不要”按钮始终能点到 */
+      z-index: 20;
     }
 
     @keyframes popIn {
@@ -110,7 +109,7 @@
 </head>
 <body>
   <div class="container">
-    <img id="mainImage" src="images/start.png" alt="开始图片"
+    <img id="mainImage" src="./start.png" alt="开始图片"
          onerror="this.alt='谢谢宝宝的原谅！'+this.src">
     <h1 id="question">你愿意原谅我吗？</h1>
     <button id="yes">和好</button>
@@ -125,9 +124,9 @@
 
     let clickCount = 0;
     let yesScale   = 1;
-    const step     = 1.35;     // 每次放大幅度
-    const autoTriggerScale = 6; // 到达该倍率后自动进入成功页
-    const maxTranslateX = 300; // “不要”最大右移再加大一些
+    const step     = 1.35;
+    const autoTriggerScale = 6;
+    const maxTranslateX = 300;
     const maxMoveUp     = 200;
 
     const noTexts = [
@@ -138,14 +137,13 @@
       "原谅我嘛，对不起"
     ];
 
-    // 预加载图片
+    // 预加载图片（改成根目录）
     ["rencuo.png","geiqian.png","duoqilai.png","weiqu.png","crying.png","hug.png"]
-      .forEach(name => { const i = new Image(); i.src = "images/" + name; });
+      .forEach(name => { const i = new Image(); i.src = name; });
 
     function updateYesScale(nextScale) {
       yesScale = nextScale;
       yesButton.style.transform = `scale(${yesScale})`;
-      // ❌ 不再设置 yes 的 z-index，避免遮挡 no
       if (yesScale >= autoTriggerScale) {
         enterSuccessScreen();
       }
@@ -155,7 +153,7 @@
       document.body.innerHTML = `
         <div class="yes-screen">
           <h1 class="yes-text">!!!喜欢你!! ( >᎑<)♡︎ᐝ</h1>
-          <img src="images/hug.png" alt="拥抱" class="yes-image"
+          <img src="./hug.png" alt="拥抱" class="yes-image"
                onerror="this.alt='谢谢宝宝的原谅！'+this.src">
         </div>
       `;
@@ -165,35 +163,28 @@
     noButton.addEventListener("click", function() {
       clickCount++;
 
-      // 放大“和好”
       const nextScale = 1 + clickCount * step;
       updateYesScale(nextScale);
 
-      // “不要”右移（更大幅度，减少重叠）
       const noOffset = Math.min(clickCount * 70, maxTranslateX);
       noButton.style.transform = `translateX(${noOffset}px)`;
 
-      // 图片与文字上移
       const moveUp = Math.min(clickCount * 25, maxMoveUp);
       mainImage.style.transform = `translateY(-${moveUp}px)`;
       questionText.style.transform = `translateY(-${moveUp}px)`;
 
-      // 文案变化
       if (clickCount <= noTexts.length) {
         noButton.innerText = noTexts[clickCount - 1];
       }
 
-      // 图片变化
-      if (clickCount === 1) mainImage.src = "images/rencuo.png";
-      if (clickCount === 2) mainImage.src = "images/geiqian.png";
-      if (clickCount === 3) mainImage.src = "images/duoqilai.png";
-      if (clickCount === 4) mainImage.src = "images/weiqu.png";
-      if (clickCount >= 5) mainImage.src = "images/crying.png";
+      if (clickCount === 1) mainImage.src = "rencuo.png";
+      if (clickCount === 2) mainImage.src = "geiqian.png";
+      if (clickCount === 3) mainImage.src = "duoqilai.png";
+      if (clickCount === 4) mainImage.src = "weiqu.png";
+      if (clickCount >= 5) mainImage.src = "crying.png";
     });
 
-    // 手动点“和好”也能直接进入成功页
     yesButton.addEventListener("click", enterSuccessScreen);
   </script>
 </body>
 </html>
-
