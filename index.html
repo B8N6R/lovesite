@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>表白小网页</title>
+  <style>
+    html, body { height: 100%; }
+    body {
+      background-color: #f1d5da;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container { width: 90%; max-width: 500px; position: relative; }
+
+    #mainImage {
+      width: 100%;
+      max-width: 200px;
+      transition: transform 0.3s ease;
+      will-change: transform;
+    }
+
+    h1 {
+      font-size: 5vw;
+      color: #68495b;
+      margin: 20px 0;
+      transition: transform 0.3s ease;
+      will-change: transform;
+    }
+
+    button {
+      font-size: 4vw;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 10px;
+      transition: transform 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+      will-change: transform;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      position: relative; /* 为 z-index 建立层叠上下文 */
+    }
+
+    #yes {
+      background-color: #d4818e;
+      color: #fff;
+      transform-origin: center center;
+      animation: popIn 450ms ease-out 1;
+      /* 不再手动设 z-index，避免挡住“不要” */
+    }
+
+    #no {
+      background-color: #6784b1;
+      color: #fff;
+      z-index: 20; /* 关键：保证“不要”按钮始终能点到 */
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.8); opacity: 0; }
+      60%  { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    .yes-screen {
+      position: fixed;
+      inset: 0;
+      background-color: #ffdae0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      z-index: 9999;
+      padding: 24px;
+      text-align: center;
+      animation: fadeIn 300ms ease-out 1;
+    }
+
+    .yes-text { font-size: 7vw; color: #68495b; margin: 0; }
+    .yes-image {
+      width: 50%; max-width: 300px; height: auto; display: block;
+      animation: floatY 2.6s ease-in-out infinite;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes floatY { 0% {transform:translateY(0)} 50% {transform:translateY(-10px)} 100% {transform:translateY(0)} }
+
+    @media (min-width: 768px) {
+      body { display: block; }
+      .container {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: auto; max-width: none;
+      }
+      #mainImage { width: 200px; }
+      h1 { font-size: 28px; margin: 20px 0; }
+      button { font-size: 18px; }
+      .yes-text { font-size: 36px; }
+      .yes-image { width: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img id="mainImage" src="images/start.png" alt="开始图片"
+         onerror="this.alt='谢谢宝宝的原谅！'+this.src">
+    <h1 id="question">你愿意原谅我吗？</h1>
+    <button id="yes">和好</button>
+    <button id="no">不要</button>
+  </div>
+
+  <script>
+    const yesButton = document.getElementById("yes");
+    const noButton = document.getElementById("no");
+    const questionText = document.getElementById("question");
+    const mainImage = document.getElementById("mainImage");
+
+    let clickCount = 0;
+    let yesScale   = 1;
+    const step     = 1.35;     // 每次放大幅度
+    const autoTriggerScale = 6; // 到达该倍率后自动进入成功页
+    const maxTranslateX = 300; // “不要”最大右移再加大一些
+    const maxMoveUp     = 200;
+
+    const noTexts = [
+      "对不起，我知道错了",
+      "零花钱都给你",
+      "就原谅一次呗宝宝",
+      "能不能给个台阶嘛",
+      "原谅我嘛，对不起"
+    ];
+
+    // 预加载图片
+    ["rencuo.png","geiqian.png","duoqilai.png","weiqu.png","crying.png","hug.png"]
+      .forEach(name => { const i = new Image(); i.src = "images/" + name; });
+
+    function updateYesScale(nextScale) {
+      yesScale = nextScale;
+      yesButton.style.transform = `scale(${yesScale})`;
+      // ❌ 不再设置 yes 的 z-index，避免遮挡 no
+      if (yesScale >= autoTriggerScale) {
+        enterSuccessScreen();
+      }
+    }
+
+    function enterSuccessScreen() {
+      document.body.innerHTML = `
+        <div class="yes-screen">
+          <h1 class="yes-text">!!!喜欢你!! ( >᎑<)♡︎ᐝ</h1>
+          <img src="images/hug.png" alt="拥抱" class="yes-image"
+               onerror="this.alt='谢谢宝宝的原谅！'+this.src">
+        </div>
+      `;
+      document.body.style.overflow = "hidden";
+    }
+
+    noButton.addEventListener("click", function() {
+      clickCount++;
+
+      // 放大“和好”
+      const nextScale = 1 + clickCount * step;
+      updateYesScale(nextScale);
+
+      // “不要”右移（更大幅度，减少重叠）
+      const noOffset = Math.min(clickCount * 70, maxTranslateX);
+      noButton.style.transform = `translateX(${noOffset}px)`;
+
+      // 图片与文字上移
+      const moveUp = Math.min(clickCount * 25, maxMoveUp);
+      mainImage.style.transform = `translateY(-${moveUp}px)`;
+      questionText.style.transform = `translateY(-${moveUp}px)`;
+
+      // 文案变化
+      if (clickCount <= noTexts.length) {
+        noButton.innerText = noTexts[clickCount - 1];
+      }
+
+      // 图片变化
+      if (clickCount === 1) mainImage.src = "images/rencuo.png";
+      if (clickCount === 2) mainImage.src = "images/geiqian.png";
+      if (clickCount === 3) mainImage.src = "images/duoqilai.png";
+      if (clickCount === 4) mainImage.src = "images/weiqu.png";
+      if (clickCount >= 5) mainImage.src = "images/crying.png";
+    });
+
+    // 手动点“和好”也能直接进入成功页
+    yesButton.addEventListener("click", enterSuccessScreen);
+  </script>
+</body>
+</html>
+
