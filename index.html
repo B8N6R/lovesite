@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>表白小网页</title>
+  <title>对不起</title>
   <style>
     html, body { height: 100%; }
     body {
@@ -21,7 +21,7 @@
 
     .container { width: 90%; max-width: 500px; position: relative; z-index: 1; }
 
-    /* 避免遮挡点击：图和标题不吃点击事件 */
+    
     #mainImage, #question { pointer-events: none; }
 
     #mainImage {
@@ -50,11 +50,11 @@
       will-change: transform;
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
       position: relative;
-      z-index: 100;              /* 按钮优先命中 */
+      z-index: 100;             
       pointer-events: auto;
-      min-width: 44px;           /* 提升可点性（移动端建议尺寸） */
+      min-width: 44px;         
       min-height: 44px;
-      touch-action: manipulation;/* 去掉移动端点击延迟/手势干扰 */
+      touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -68,7 +68,7 @@
     #no {
       background-color: #6784b1;
       color: #fff;
-      left: 0; /* 用 left 位移，避免 transform 在部分机型造成命中偏差 */
+      left: 0;
     }
 
     @keyframes popIn {
@@ -131,7 +131,7 @@
     const question  = document.getElementById("question");
     const mainImage = document.getElementById("mainImage");
 
-    // ---------- 参数：乘法放大，第6次触发 ----------
+
     let clickCount = 0;
     let yesScale   = 1;
     const step = 1.5;
@@ -148,7 +148,7 @@
       "原谅我嘛，对不起"
     ];
 
-    // ---------- 预加载 ----------
+
     ["rencuo.png","geiqian.png","duoqilai.png","weiqu.png","crying.png","hug.png"]
       .forEach(name => { const i = new Image(); i.src = name; });
 
@@ -166,7 +166,7 @@
       const nextScale = yesScale * step; // 乘法增长：1.5, 2.25, 3.375, 5.06, 7.59, 11.39…
       updateYesScale(nextScale);
 
-      // 用 left 位移，避免 transform 引起命中偏差
+
       const noOffset = Math.min(clickCount * 70, maxTranslateX);
       noButton.style.left = `${noOffset}px`;
 
@@ -197,13 +197,14 @@
       document.body.style.overflow = "hidden";
     }
 
-    // ---------- 使用 pointer 事件，兼容触摸/鼠标 ----------
+
     yesButton.addEventListener('pointerup', enterSuccessScreen);
     noButton .addEventListener('pointerup', handleNoClick);
 
-    // 调试：如果点不动，打开控制台看是否打印
+    // 调试
     // yesButton.addEventListener('pointerup', () => console.log('yes tap'));
     // noButton .addEventListener('pointerup',  () => console.log('no  tap'));
   </script>
 </body>
 </html>
+
